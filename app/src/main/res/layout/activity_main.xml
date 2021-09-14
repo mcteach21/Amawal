@@ -6,6 +6,32 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/btnKeybord"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/keyboard"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/translate"
+        app:layout_constraintTop_toBottomOf="@+id/keyboard" />
+
+    <androidx.gridlayout.widget.GridLayout
+        android:id="@+id/keyboard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/grid_shape"
+        app:columnCount="6"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout"
+        app:rowCount="5">
+
+    </androidx.gridlayout.widget.GridLayout>
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputLayout"
         android:layout_width="0dp"
@@ -30,26 +56,43 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:text="Translate"
+        app:layout_constraintEnd_toStartOf="@+id/btnKeybord"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/keyboard" />
+
+    <TextView
+        android:id="@+id/tvNoResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:text="Translate"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/no_result_txt"
+        android:textColor="@color/primaryLightColor"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/translate" />
 
     <ScrollView
+        android:id="@+id/scrollResult"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/translate"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintTop_toBottomOf="@+id/tvNoResult">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -68,6 +111,7 @@
                 android:fontFamily="casual"
                 android:gravity="center"
                 android:textColor="@color/primaryTextColor"
+                android:textIsSelectable="true"
                 android:textSize="30sp"
                 tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
@@ -83,6 +127,7 @@
                 android:fontFamily="@font/tifinaghe_ircam_normal"
                 android:gravity="center"
                 android:textColor="@color/teal_700"
+                android:textIsSelectable="true"
                 android:textSize="30sp"
                 tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
@@ -92,7 +137,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"/>
+                android:layout_marginEnd="16dp">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listFlags"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp" />
 
             <TextView
                 android:id="@+id/tvDesc"
@@ -105,6 +160,7 @@
                 android:clickable="true"
                 android:fontFamily="casual"
                 android:textColor="@color/primaryTextColor"
+                android:textIsSelectable="true"
                 android:textSize="16sp"
                 tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
@@ -119,6 +175,7 @@
                 android:clickable="true"
                 android:fontFamily="casual"
                 android:textColor="@color/primaryTextColor"
+                android:textIsSelectable="true"
                 android:textSize="16sp"
                 tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 

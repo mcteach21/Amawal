@@ -2,16 +2,20 @@ package mc.apps.amawal;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.gridlayout.widget.GridLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -21,29 +25,35 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import mc.apps.amawal.tools.HtmlRetrofitClient;
-import mc.apps.amawal.tools.RetrofitInterface;
+
+import mc.apps.amawal.tools.Keyboard;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "retrofit";
-    TextView txtTitle, txtSubTitle, txtDesc;
+    private static final int LATIN_BERBER_ALPHABET = 2;
+    TextView txtTitle, txtSubTitle, txtDesc, txtDesc2, txtNoResult;
     EditText edtAwal;
-    Button btnTranslate;
+    Button btnTranslate, displayKeyboard;
+    ScrollView scrollResult;
+    Keyboard kb;
+    GridLayout keyboard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,17 +63,43 @@ public class MainActivity extends AppCompatActivity {
         txtTitle =  findViewById(R.id.tvTitle);
         txtSubTitle =  findViewById(R.id.tvSubTitle);
         txtDesc =  findViewById(R.id.tvDesc);
+        txtDesc2 =  findViewById(R.id.tvDesc2);
+        txtNoResult =  findViewById(R.id.tvNoResult);
 
         edtAwal = findViewById(R.id.awal);
         btnTranslate = findViewById(R.id.translate);
         btnTranslate.setOnClickListener(v->scrapy());
 
+        scrollResult = findViewById(R.id.scrollResult);
+
+        keyboard = findViewById(R.id.keyboard);
+        displayKeyboard = findViewById(R.id.btnKeybord);
+        displayKeyboard.setOnClickListener(v->displayKeyboard());
+
+        kb = new Keyboard(this, keyboard, edtAwal);
+
         handleRecyclerview();
+    }
+
+    boolean opened=false;
+    private void displayKeyboard() {
+
+        kb.createCustomKeyboard(LATIN_BERBER_ALPHABET,false);
+        Log.i(TAG, "displayKeyboard: "+opened);
+        opened = !opened;
+
+        kb.slideKeybord(opened);
+        if (opened) {
+            Log.i(TAG, "Hide Keyboard! (opened= "+opened+")");
+            kb.hideKeyboard();
+        }
     }
 
     private void scrapy() {
         String awal = edtAwal.getEditableText().toString();
-        hideKeyboard(btnTranslate);
+
+        kb.hideKeyboard();
+
         /**
          * Web scraping
          */
@@ -71,9 +107,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 try{
-                    String document = response.body().string();
-                    Document html = Jsoup.parse(document);
-                    parseResponse(html);
+                    scrollResult.setVisibility(response.body()==null?View.GONE:View.VISIBLE);
+                    txtNoResult.setVisibility(response.body()==null?View.VISIBLE:View.GONE);
+                    if(response.body()!=null) {
+                        String document = response.body().string();
+                        Document html = Jsoup.parse(document);
+                        parseResponse(html);
+                    }
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -88,16 +128,14 @@ public class MainActivity extends AppCompatActivity {
         Call<ResponseBody> call = HtmlRetrofitClient.getInstance().getHtmlContent(awal);
         call.enqueue(htmlResponseCallback);
 
-        adapter.reset();
+        reset();
+        //adapter.reset();
     }
 
     String[][] rubriques = {{"Tasniremt","Terminologie"},{"Agdawal","Synonyme"},
             {"Imedyaten","Exemples"},{"Addad amaruz","Etat Annexé"}};
 
-    public void hideKeyboard(View view) {
-        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-    }
+
     private void parseResponse(Document document) {
         StringBuilder sb = new StringBuilder();
 
@@ -106,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         Element tifinagh = definition.select("span.tz").first();
         Element definition_content = definition.children().select("div").first();
 
-        //Log.i(TAG, "Title : "+title.html()+" => "+tifinagh.html());
+        Log.i(TAG, "Title : "+title.html()+" => "+tifinagh.html());
 
         txtTitle.setText(title.html());
         txtSubTitle.setText(title.html());
@@ -114,8 +152,7 @@ public class MainActivity extends AppCompatActivity {
         Elements regions = definition_content.select("ul.meta_word_region li");
         if(!regions.isEmpty()) {
             for (Element region : regions) {
-                //Log.i(TAG, region.html());
-                adapter.add(region.html());
+                regionsAdapter.add(region.html());
             }
         }
 
@@ -124,16 +161,12 @@ public class MainActivity extends AppCompatActivity {
         Elements translation_flags = content_field.select("p span.translation");
         String flag_iso;
         if(!translation_flags.isEmpty()) {
-            sb.append(System.getProperty("line.separator"));
             for (Element translation_flag : translation_flags) {
                 flag_iso = translation_flag.attr("class").replace("translation flag_", "");
                 Log.i(TAG, flag_iso + " " + translation_flag.parent().text());
-
-                sb.append(flag_iso + " " + translation_flag.parent().text());
-                sb.append(System.getProperty("line.separator"));
+                flagsAdapter.add("["+flag_iso.split("_")[0] + "] " + translation_flag.parent().text());
                 translation_flag.parent().remove();
             }
-            sb.append(System.getProperty("line.separator"));
         }
 
         String content = content_field.html().replace("<strong>", "[").replace("</strong>", "] ").replace(":]", "]");
@@ -153,16 +186,29 @@ public class MainActivity extends AppCompatActivity {
             sb.append(System.getProperty("line.separator"));
         }
 
-
-
         txtDesc.setText(sb.toString());
     }
 
+    private void reset(){
+        txtTitle.setText("");
+        txtSubTitle.setText("");
+
+        txtDesc.setText("");
+        txtDesc2.setText("");
+
+        regionsAdapter.reset();
+        flagsAdapter.reset();
+
+        if(opened) {
+            opened = false;
+            kb.slideKeybord(false);
+        }
+    }
 
     /**
      * List
      */
-    private MyCustomAdapter adapter;
+    private MyCustomAdapter regionsAdapter, flagsAdapter;
     private class MyCustomAdapter extends RecyclerView.Adapter<MyCustomAdapter.MyCustomViewHolder> {
         private static final long FADE_DURATION = 2000;
         List<String> items = new ArrayList<>();
@@ -230,18 +276,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void handleRecyclerview() {
-        RecyclerView recyclerview = findViewById(R.id.listRegions);
+        RecyclerView regions = findViewById(R.id.listRegions);
+        RecyclerView flags = findViewById(R.id.listFlags);
+        LayoutAnimationController animation = AnimationUtils.loadLayoutAnimation(this, R.anim.layout_animation_fall_down);
 //        ListItemClickListener item_listener = (id) -> {
-//            GetBiography(adapter.items.get(id).id);
+//
 //        };
+        regionsAdapter = new MyCustomAdapter();//item_listener);
+        flagsAdapter = new MyCustomAdapter();//item_listener);
 
-        adapter = new MyCustomAdapter();//item_listener);
-        recyclerview.setAdapter(adapter);
-        recyclerview.setLayoutManager(new GridLayoutManager(this, 3));
+        regions.setAdapter(regionsAdapter);
+        regions.setLayoutManager(new GridLayoutManager(this, 3));
+        regions.setLayoutAnimation(animation);
 
-        LayoutAnimationController animation = AnimationUtils.loadLayoutAnimation(this,
-                R.anim.layout_animation_fall_down);
-        recyclerview.setLayoutAnimation(animation);
+        flags.setAdapter(flagsAdapter);
+        flags.setLayoutManager(new GridLayoutManager(this, 2));
+        flags.setLayoutAnimation(animation);
     }
 
 }

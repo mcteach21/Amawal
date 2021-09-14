@@ -6,6 +6,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="primaryColor">#bf360c</color>
+    <color name="primaryColor80">#CC0E212B</color>
     <color name="primaryLightColor">#f9683a</color>
     <color name="primaryDarkColor">#870000</color>
     <color name="primaryTextColor">#ffffff</color>
@@ -13,4 +14,6 @@
     <color name="primaryBlueDark">#000a12</color>
 
     <color name="dialogButtonText">#008577</color>
+
+    <color name="material_red_a200">#FF5252</color>
 </resources>
