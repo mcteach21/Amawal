@@ -276,10 +276,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String cleanHtml(String html) {
-        return  html.replace("<p>","").replace("</p>","").replace("<br>",System.getProperty("line.separator")).trim();
+        return  html.replace("<p>","").replace("</p>","").replace("</p","").replace("<br>",System.getProperty("line.separator")).trim();
     }
-
-
 
     List<View> blocs_in_container = new ArrayList();
     private void reset(){
@@ -385,7 +383,6 @@ public class MainActivity extends AppCompatActivity {
         flags_list = findViewById(R.id.listFlags);
         LayoutAnimationController animation = AnimationUtils.loadLayoutAnimation(this, R.anim.layout_animation_fall_down);
 //        ListItemClickListener item_listener = (id) -> {
-//
 //        };
         regionsAdapter = new MyCustomAdapter();//item_listener);
         flagsAdapter = new MyCustomAdapter();//item_listener);
