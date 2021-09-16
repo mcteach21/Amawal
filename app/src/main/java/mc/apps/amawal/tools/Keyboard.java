@@ -71,13 +71,14 @@ public class Keyboard {
 
             this.opened=false;
         }else {
-            for (int i = 0; i < maxIndice; i++)
+            for (int i = 0; i <= maxIndice; i++)
                 addKeytoKeyboard(index, i, keys[i]);
 
             addKeytoKeyboard(index, maxIndice, "<x");
             if(keys.length>maxIndice)
                 addKeytoKeyboard(index,maxIndice+1, "..");
         }
+
         keyboard.setUseDefaultMargins(true);
     }
     public void addKeytoKeyboard(int index, int i, String txt) {

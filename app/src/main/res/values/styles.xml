@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="bloc_title_style">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="android:autoLink">web</item>
+        <item name="android:background">@drawable/container_rounded_grey</item>
+        <item name="android:clickable">true</item>
+        <item name="android:fontFamily">casual</item>
+        <item name="android:textColor">@color/primaryTextColor</item>
+        <item name="android:textIsSelectable">true</item>
+        <item name="android:textSize">16sp</item>
+        <item name="minHeight">48dp</item>
+    </style>
+
+    <style name="blocContentStyle">
+        <item name="android:fontFamily">casual</item>
+        <item name="android:textColor">@color/primaryTextColor</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textIsSelectable">true</item>
+    </style>
+
+
+    <style name="blocTitleStyle">
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">casual</item>
+        <item name="android:textColor">@color/primaryTextColor</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+</resources>

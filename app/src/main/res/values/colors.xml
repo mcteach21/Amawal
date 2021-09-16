@@ -16,4 +16,14 @@
     <color name="dialogButtonText">#008577</color>
 
     <color name="material_red_a200">#FF5252</color>
+
+
+    <color name="dark_brown">#321911</color>
+    <color name="light_brown">#68090909</color>
+    <color name="dark_blue">#1c313a</color>
+    <color name="dark_teal">#004c40</color>
+
+    <color name="dark_grey">#373737</color>
+    <color name="dark_red">#8c0032</color>
+
 </resources>

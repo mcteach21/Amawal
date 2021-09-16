@@ -2,10 +2,10 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:drawable="@drawable/colors_degrade" />
-    <item android:top="10dp" android:bottom="10dp"
-        android:left="10dp" android:right="10dp">
-       <bitmap android:src="@drawable/logo_zw"  />
-    </item>
+<!--    <item android:top="10dp" android:bottom="10dp"-->
+<!--        android:left="10dp" android:right="10dp">-->
+<!--       <bitmap android:src="@drawable/logo_zw"  />-->
+<!--    </item>-->
     <item android:top="20dp" android:bottom="20dp"
         android:left="20dp" android:right="20dp">
         <bitmap android:src="@drawable/logo_z_red_sm"  />
