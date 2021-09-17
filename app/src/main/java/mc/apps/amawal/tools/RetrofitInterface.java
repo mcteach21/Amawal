@@ -13,4 +13,5 @@ public interface RetrofitInterface {
     //kab/fr/Aɣrum
     @GET("{lang1}/{lang2}/{query}")
     Call<ResponseBody> getHtml2Content(@Path("lang1") String lang1, @Path("lang2") String lang2, @Path("query") String query);
+
 }

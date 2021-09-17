@@ -22,11 +22,18 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.ScaleAnimation;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -54,18 +61,30 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "retrofit";
-    private static final int LATIN_BERBER_ALPHABET = 2;
     private static final String KAB_LANG_CODE = "kab";
     private static final String FR_LANG_CODE = "fr";
     private static final String RUB_EXAMPLES = "Imedyaten";
 
+    private static final String KAB_SEARCH_HINT ="awal.." ;
+    private static final String FR_SEARCH_HINT ="mot.." ;
+    private static final String KAB_SEARCH_TEXT ="AFFED (.ⴼⴼⵓⴷ)" ;
+    private static final String FR_SEARCH_TEXT ="TROUVER" ;
+
+    private static final String[][] rubriques = {
+            {"Tasniremt","Terminologie"},{"Agdawal","Synonyme"},
+            {"Imedyaten","Exemples"},{"Addad amaruz","Etat Annexé"},
+            {"Assaɣen uffiɣen","Relations.."}
+    };
+
     LinearLayout blocs_container;
-    TextView txtTitle, txtSubTitle, txtNoResult;
+    TextView txtTitle, txtSubTitle, tvDefinition, txtNoResult;
     EditText edtAwal;
+    TextInputLayout searchInputLayout;
     Button btnTranslate, displayKeyboard;
     ScrollView scrollResult;
     Keyboard kb;
     GridLayout keyboard;
+    Spinner langChoice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +93,10 @@ public class MainActivity extends AppCompatActivity {
 
         txtTitle =  findViewById(R.id.tvTitle);
         txtSubTitle =  findViewById(R.id.tvSubTitle);
+        tvDefinition =  findViewById(R.id.tvDefinition);
         txtNoResult =  findViewById(R.id.tvNoResult);
 
+        searchInputLayout = findViewById(R.id.searchInputLayout);
         edtAwal = findViewById(R.id.awal);
         btnTranslate = findViewById(R.id.translate);
         btnTranslate.setOnClickListener(v->scrapy());
@@ -89,13 +110,70 @@ public class MainActivity extends AppCompatActivity {
 
         kb = new Keyboard(this, keyboard, edtAwal);
 
+        langChoice = findViewById(R.id.langChoice);
         handleRecyclerview();
+        handlelangChoice();
+    }
+    private void handlelangChoice() {
+
+        langChoice.setAdapter(new langChoiceAdapter());
+        langChoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Adapter adapter = adapterView.getAdapter();
+                int id = (int) adapter.getItemId(i);
+                //Toast.makeText(getBaseContext(), "Langue : "+(id==0?"Berbere":"Français"), Toast.LENGTH_SHORT).show();
+
+                langChanged(id);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) { }
+        });
+    }
+    int CurrentLanguage=0;
+    private void langChanged(int id) {
+        CurrentLanguage=id;
+
+        edtAwal.setText("");
+        blocs_container.setVisibility(View.INVISIBLE);
+
+        edtAwal.setHint(CurrentLanguage==0? KAB_SEARCH_HINT:FR_SEARCH_HINT);
+        searchInputLayout.setHint(CurrentLanguage==0? KAB_SEARCH_HINT:FR_SEARCH_HINT);
+
+        btnTranslate.setText(CurrentLanguage==0? KAB_SEARCH_TEXT:FR_SEARCH_TEXT);
+        reset();
+    }
+    class langChoiceAdapter extends BaseAdapter {
+        int[] images = {R.drawable.berbere_icon, R.drawable.french_icon};
+        @Override
+        public int getCount() {
+            return images.length;
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return images[i];
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            int image = images[i];
+
+            View rowView = getLayoutInflater().inflate(R.layout.lang_spinner_item_layout , null,true);
+            ImageView logo = rowView.findViewById(R.id.lang_logo);
+            logo.setImageResource(image);
+            return rowView;
+        }
     }
 
     boolean opened=false;
     private void displayKeyboard() {
-
-        kb.createCustomKeyboard(LATIN_BERBER_ALPHABET,false);
+        kb.createCustomKeyboard(CurrentLanguage,false);
         Log.i(TAG, "displayKeyboard: "+opened);
         opened = !opened;
 
@@ -108,31 +186,35 @@ public class MainActivity extends AppCompatActivity {
 
     private void scrapy() {
         String awal = edtAwal.getEditableText().toString();
+        if("".equals(awal.trim()))
+            return;
+
         kb.hideKeyboard();
 
+        reset();
         /**
          * Web scraping
          */
         Callback<ResponseBody> htmlResponseCallback = new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                try{
-                    scrollResult.setVisibility(response.body()==null?View.GONE:View.VISIBLE);
-                    txtNoResult.setVisibility(response.body()==null?View.VISIBLE:View.GONE);
-                    blocs_container.setVisibility(response.body()==null?View.INVISIBLE:View.VISIBLE);
+                try {
+                    scrollResult.setVisibility(response.body() == null ? View.GONE : View.VISIBLE);
+                    txtNoResult.setVisibility(response.body() == null ? View.VISIBLE : View.GONE);
+                    blocs_container.setVisibility(response.body() == null ? View.INVISIBLE : View.VISIBLE);
 
-                    if(response.body()!=null) {
+                    if (response.body() != null) {
                         String document = response.body().string();
                         Document html = Jsoup.parse(document);
 
                         String url = response.raw().request().url().toString();
-                        if(url.contains(HtmlAmawalRetrofitClient.BASE_URL)){
+                        if (url.contains(HtmlAmawalRetrofitClient.BASE_URL)) {
                             parseAmawalResponse(html);
-                        }else{
+                        } else {
                             parseGlosbeResponse(html);
                         }
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -142,21 +224,18 @@ public class MainActivity extends AppCompatActivity {
                 t.printStackTrace();
             }
         };
+        if(CurrentLanguage==0) {
 
-        Call<ResponseBody> call1 = HtmlAmawalRetrofitClient.getInstance().getHtmlContent(awal);
-        call1.enqueue(htmlResponseCallback);
+            Call<ResponseBody> call1 = HtmlAmawalRetrofitClient.getInstance().getHtmlContent(awal);
+            call1.enqueue(htmlResponseCallback);
 
-        Call<ResponseBody> call2 = HtmlGlosbeRetrofitClient.getInstance().getHtml2Content(KAB_LANG_CODE, FR_LANG_CODE, awal);
-        call2.enqueue(htmlResponseCallback);
-
-        reset();
+//            Call<ResponseBody> call2 = HtmlGlosbeRetrofitClient.getInstance().getHtml2Content(KAB_LANG_CODE, FR_LANG_CODE, awal);
+//            call2.enqueue(htmlResponseCallback);
+        }else{
+            Call<ResponseBody> call2 = HtmlGlosbeRetrofitClient.getInstance().getHtml2Content(FR_LANG_CODE, KAB_LANG_CODE, awal);
+            call2.enqueue(htmlResponseCallback);
+        }
     }
-
-    String[][] rubriques = {
-            {"Tasniremt","Terminologie"},{"Agdawal","Synonyme"},
-            {"Imedyaten","Exemples"},{"Addad amaruz","Etat Annexé"},
-            {"Assaɣen uffiɣen","Relations.."}
-    };
 
     private String findRubriqueFr(String kab_rubrique){
         Optional<String[]> result = Arrays.stream(rubriques).filter(rub -> rub[0].equals(kab_rubrique)).findFirst();
@@ -164,20 +243,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void parseGlosbeResponse(Document document) {
+        StringBuilder content = new StringBuilder();
+
+        Log.i(TAG, "**********************************************");
+        Log.i(TAG, "*************** GlosbeResponse ***************");
         Elements translations = document.select("h3.translation span");
-        if(!translations.isEmpty())
+        if(!translations.isEmpty()) {
             for (Element translation : translations)
-                Log.i(TAG, "Glosbe : "+translation.html());
+                if (!content.toString().contains(translation.html()))
+                    content.append((content.toString().isEmpty() ? "" : " | ") + translation.html());
+            //Log.i(TAG, "Glosbe : "+translation.html());
+
+            txtTitle.setText(content.toString());
+            txtSubTitle.setText(content.toString());
+        }
+        txtTitle.setVisibility(translations.isEmpty()?View.GONE:View.VISIBLE);
+        txtSubTitle.setVisibility(translations.isEmpty()?View.GONE:View.VISIBLE);
+        tvDefinition.setVisibility(View.GONE);
 
         //exemples
-        StringBuilder content = new StringBuilder();
         Elements examples = document.select(".tmem__item");
+        content = new StringBuilder();
         if(!examples.isEmpty())
             for (Element example : examples)
                 content.append(example.child(0).text()+" : "+example.child(1).text()+"\n");
 
-        // TODO : display..
-        // addToContainer(content.toString(), R.drawable.container_rounded_brown, R.color.primaryTextColor, false);
+        addToContainer(findRubriqueFr(RUB_EXAMPLES) + " ("+RUB_EXAMPLES+")", R.drawable.container_rounded_transparent, R.color.white, true);
+        addToContainer(content.toString(), R.drawable.container_rounded_teal, R.color.primaryTextColor, false);
+        Log.i(TAG, "**********************************************");
     }
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void parseAmawalResponse(Document document) {
@@ -189,6 +282,10 @@ public class MainActivity extends AppCompatActivity {
 
         txtTitle.setText(title.html());
         txtSubTitle.setText(title.html());
+
+        txtTitle.setVisibility(title.html().isEmpty()?View.GONE:View.VISIBLE);
+        txtSubTitle.setVisibility(title.html().isEmpty()?View.GONE:View.VISIBLE);
+        tvDefinition.setVisibility(title.html().isEmpty()?View.GONE:View.VISIBLE);
 
         Elements regions = definition_content.select("ul.meta_word_region li");
         if(!regions.isEmpty())
@@ -219,16 +316,10 @@ public class MainActivity extends AppCompatActivity {
         int index;
         HashMap<Integer, String> rubriques_contents= new HashMap<>();
         for (String[] rubrique : rubriques) {
-
-
             rubrique_title = rubrique[0];
             index = content.indexOf("["+rubrique_title+"]");
             if(index>-1)
                 rubriques_contents.put(index, rubrique_title);
-
-
-//            Log.i(TAG, "Rubrique : "+rubrique_title);
-//            Log.i(TAG, Arrays.toString(rubrique));
         }
 
         LinkedHashMap<Integer, String> sorted_rubriques_contents = getSortedHashMap(rubriques_contents);
@@ -236,12 +327,8 @@ public class MainActivity extends AppCompatActivity {
 
         Integer first_rub_index = first_rubrique.isPresent()?first_rubrique.get().getKey():content.trim().length();
 
-        Log.i(TAG, "==================================");
-        for ( Map.Entry<Integer, String> entry : sorted_rubriques_contents.entrySet()) {
-            Log.i(TAG, entry.getKey()+" "+entry.getValue());
-        }
-        Log.i(TAG, "==================================");
-        addToContainer(cleanHtml(content.trim().subSequence(0, first_rub_index-1).toString()), R.drawable.container_rounded_blue, R.color.primaryLightColor, false);
+        //addToContainer(cleanHtml(content.trim().subSequence(0, first_rub_index-1).toString()), R.drawable.container_rounded_blue, R.color.primaryLightColor, false);
+        tvDefinition.setText(cleanHtml(content.trim().subSequence(0, first_rub_index-1).toString()));
 
         final String[] current_rubrique = {""};
         final int[] start_index = {-1};
@@ -253,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
                         String rubrique = current_rubrique[0]+" ("+findRubriqueFr(current_rubrique[0])+")";
                         int background = RUB_EXAMPLES.equals(current_rubrique[0])?R.drawable.container_rounded_teal:R.drawable.container_rounded_grey;
 
-                        Log.i(TAG, "=>"+rubrique);
+                        //Log.i(TAG, "=>"+rubrique);
 
                         addToContainer(rubrique, R.drawable.container_rounded_transparent, R.color.white, true);
                         addToContainer(content_clean, background, R.color.primaryTextColor, false);
@@ -261,7 +348,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     current_rubrique[0] = i.getValue();
                     start_index[0] = i.getKey();
-                    Log.i(TAG, "current_rubrique[0] = "+current_rubrique[0]+" start_index[0]="+start_index[0]);
                 }
         );
 
@@ -281,11 +367,15 @@ public class MainActivity extends AppCompatActivity {
 
     List<View> blocs_in_container = new ArrayList();
     private void reset(){
+
         txtTitle.setText("");
         txtSubTitle.setText("");
+        tvDefinition.setText("");
 
-//        txtDesc.setText("");
-//        txtDesc2.setText("");
+        blocs_container.setVisibility(View.INVISIBLE);
+        regions_list.setVisibility(View.GONE);
+        flags_list.setVisibility(View.GONE);
+
         for (View bloc: blocs_in_container)
             blocs_container.removeView(bloc);
 
@@ -402,7 +492,7 @@ public class MainActivity extends AppCompatActivity {
 
     class CustomTextView extends androidx.appcompat.widget.AppCompatTextView {
         public CustomTextView(Context context) {
-            super(context, null, R.style.bloc_title_style);
+            super(context, null, R.style.blocTitleStyle);
         }
     }
     private void addToContainer(String content, int background, int color, boolean title){
@@ -434,7 +524,6 @@ public class MainActivity extends AppCompatActivity {
         animation.setStartOffset(0);
         tv.startAnimation(animation);
     }
-
     private int castFromDP(int size) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, size, getResources().getDisplayMetrics());
     }

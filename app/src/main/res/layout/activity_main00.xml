@@ -30,13 +30,13 @@
         app:columnCount="6"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayout"
+        app:layout_constraintTop_toBottomOf="@+id/searchInputLayout"
         app:rowCount="5">
 
     </androidx.gridlayout.widget.GridLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayout"
+        android:id="@+id/searchInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -154,7 +154,7 @@
                 android:background="@drawable/container_rounded_grey" />
 
             <TextView
-                android:id="@+id/tvDesc"
+                android:id="@+id/tvDefinition"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"

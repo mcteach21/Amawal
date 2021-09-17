@@ -20,6 +20,9 @@ import mc.apps.amawal.R;
 
 public class Keyboard {
     private static final String TAG = "retrofit";
+    public static final int BERBERE_LANG_INDEX = 0 ;
+    public static final int FRENCH_LANG_INDEX = 1 ;
+    public static final int TIFINAGH_LANG_INDEX = 2 ;
 
     private Context  context;
     private EditText edtSearch;
@@ -34,13 +37,13 @@ public class Keyboard {
         this.keyboard = keyboard;
     }
 
-    private String format(String text) {
-        return text.substring(0, 1).toUpperCase()+text.substring(1).toLowerCase();
-    }
+//    private String format(String text) {
+//        return text.substring(0, 1).toUpperCase()+text.substring(1).toLowerCase();
+//    }
 
-    private String[] getAlphabet(int index){
-        currentKeyboard = index;
-        if(currentKeyboard==2)
+    private String[] getAlphabet(){
+
+        if(currentKeyboard==BERBERE_LANG_INDEX)
             return new String[]{
                     "a", "b", "c", "č", "d", "ḍ", "e", "ɛ", "f", "g", "ǧ", "ɣ", "h", "ḥ", "i", "j", "k", "l", "m", "n", "q", "r", "ṛ", "s", "ṣ", "t", "ṭ", "u", "w", "x", "y", "z", "ẓ"
 
@@ -52,36 +55,42 @@ public class Keyboard {
             };
         else
             return new String[]{
-                    "a","b", "c", "d", "e","f","g", "h","i", "j","k","l","m","n", "o","p","q","r","s","t","u","v","w","x", "y","z","<x"
+                    "a","b", "c", "d", "e","f","g", "h","i", "j","k","l","m","n", "o","p","q","r","s","t","u","v","w","x", "y","z"
             };
     }
 
     boolean opened=false;
-    public void createCustomKeyboard(int index, boolean next) {
+    public void createCustomKeyboard(int index_lang, boolean next) {
+        currentKeyboard = index_lang;
         keyboard.removeAllViews();
 
-        String[] keys = getAlphabet(index);
+        String[] keys = getAlphabet();
         if(next){
             for (int i = maxIndice+1; i < keys.length; i++) {
-                addKeytoKeyboard(index, i, keys[i]);
+                addKeytoKeyboard(i, keys[i]);
             }
-            addKeytoKeyboard(index,keys.length + 1, "<x");
+            addKeytoKeyboard(keys.length + 1, "<x");
 
-            addKeytoKeyboard(index,maxIndice+1, "<<");
+            addKeytoKeyboard(maxIndice+1, "<<");
 
             this.opened=false;
         }else {
-            for (int i = 0; i <= maxIndice; i++)
-                addKeytoKeyboard(index, i, keys[i]);
+            for (int i = 0; i < maxIndice; i++)
+                addKeytoKeyboard(i, keys[i]);
 
-            addKeytoKeyboard(index, maxIndice, "<x");
-            if(keys.length>maxIndice)
-                addKeytoKeyboard(index,maxIndice+1, "..");
+
+            if(keys.length>maxIndice) {
+                addKeytoKeyboard(maxIndice, keys[maxIndice]);
+                addKeytoKeyboard(maxIndice+ 1, "<x");
+                addKeytoKeyboard(maxIndice + 2, "..");
+            }else{
+                addKeytoKeyboard(maxIndice, "<x");
+            }
         }
 
         keyboard.setUseDefaultMargins(true);
     }
-    public void addKeytoKeyboard(int index, int i, String txt) {
+    public void addKeytoKeyboard(int i, String txt) {
         int margin = 6;
         float scale = context.getResources().getDisplayMetrics().density;
 
@@ -108,11 +117,11 @@ public class Keyboard {
 
 
         //btn.setTextColor(context.getResources().getColor(color,null));
-        btn.setOnClickListener(view -> writeWord(index, view));
+        btn.setOnClickListener(view -> writeWord(view));
         keyboard.addView(btn);
     }
 
-    public void writeWord(int index, View view) {
+    public void writeWord(View view) {
         Button btn = (Button) view;
         if(btn.getTag().equals("backspace")){
             edtSearch.setText("");
@@ -120,10 +129,10 @@ public class Keyboard {
             String text = btn.getText().toString();
             switch (text) {
                 case "..":
-                    createCustomKeyboard(index, true);
+                    createCustomKeyboard(currentKeyboard, true);
                     break;
                 case "<<":
-                    createCustomKeyboard(index, false);
+                    createCustomKeyboard(currentKeyboard, false);
                     break;
                 default:
                     String resultText = edtSearch.getText().toString() + text;
